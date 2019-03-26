@@ -1,55 +1,49 @@
 import torch
 import os
 
+import numpy as np
 import torch.nn.functional as F
 
 from torch_geometric.data import Data
 from torch_geometric.nn import GCNConv
+from scipy.sparse import random
+from scipy import stats
+from numpy.random import normal
 
-directory = r"C:\Users\Flawnson\Documents\Project Seraph & Cherub\Project Outcome\datasets\processed"
+def yielder():
+        for subdir, dirs, files in os.walk(r"C:\Users\Flawnson\Documents\Project Seraph & Cherub\Project Outcome\datasets\processed"):
+                for file in files:
+                        filepath = subdir + os.sep + file
+                        if filepath.endswith(".pt"):
+                                datasets = torch.load(str(filepath))
+                                print(datasets)
+                                yield datasets
 
-for subdir, dirs, files in os.walk(directory):
-    for file in files:
-        filepath = subdir + os.sep + file
-        if filepath.endswith(".pt"):
-                print(torch.load(str(filepath)))
+def get_network_params():
+        datasets = list(yielder())
+        datapoint = datasets[0]
+        num_attr = datapoint.num_features
+        list_num_atoms = []
 
-                        # =================================================================================== #
-                        #                                NETWORK ARCHITECTURE                                 #
-                        # =================================================================================== #
+        for datapoint in datasets:
+                list_num_atoms.append(datapoint.num_nodes)
+        # Other details are defined and included here
+        return num_attr, list_num_atoms
 
-# class Net(torch.nn.Module):
-#     def __init__(self):
-#         super(Net, self).__init__()
-#         self.conv1 = GCNConv(dataset.num_features, 16)
-#         self.conv2 = GCNConv(16, dataset.num_classes)
+num_attr, list_num_atoms = get_network_params()
 
-#     def forward(self, data):
-#         x, edge_index = data.x, data.edge_index
+class CustomRandomState(np.random.RandomState):
+        def randint(self, k):
+                i = np.random.randint(k)
+                return i - i % 2
+np.random.seed(12345)
+rs = CustomRandomState()
+rvs = stats.poisson(25, loc=10).rvs
 
-#         x = self.conv1(x, edge_index)
-#         x = F.relu(x)
-#         x = F.dropout(x, training=self.training)
-#         x = self.conv2(x, edge_index)
+def noise_maker(number_of_attributes, list_of_number_of_atoms):
 
-#         return F.log_softmax(x, dim=1)
+        for num_atoms in list_of_number_of_atoms:
+                n = random(num_attr, num_atoms, density=1, random_state=rs, data_rvs=rvs)
+        return n.A
 
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# model = Net().to(device)
-# data = dataset[0].to(device)
-# optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
-
-# model.train()
-# for epoch in range(200):
-#     optimizer.zero_grad()
-#     out = model(data)
-#     loss = F.nll_loss(out[data.train_mask], data.y[data.train_mask])
-#     loss.backward()
-#     optimizer.step()
-
-# model.eval()
-# _, pred = model(data).max(dim=1)
-# correct = pred[data.test_mask].eq(data.y[data.test_mask]).sum().item()
-# acc = correct / data.test_mask.sum().item()
-# print('Accuracy: {:.4f}'.format(acc))
-# >>> Accuracy: 0.8150
+print(noise_maker(num_attr, list_num_atoms))
