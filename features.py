@@ -62,7 +62,8 @@ def get_atom_properties(atom_list):
         atomic_number = [element(atom).atomic_number for atom in atoms]
         atomic_volume = [element(atom).atomic_volume for atom in atoms]
         atomic_weight = [element(atom).atomic_weight for atom in atoms]
-        yield atomic_number, atomic_volume, atomic_weight
+        all_atom_properties = list(zip(atomic_number, atomic_volume, atomic_weight))
+        yield all_atom_properties
 
 all_atom_properties = list(get_atom_properties(get_atom_symbols(suppl)))
 
