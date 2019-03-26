@@ -1,5 +1,5 @@
 import os.path as osp
-import outcome
+import features
 
 import torch
 
@@ -27,9 +27,9 @@ class MyOwnDataset(Dataset):
         i = 0
         for raw_path in self.raw_paths:
             # Read data from `raw_path`.
-            for x, e_index, e_attr in list(zip(outcome.return_node_attr(outcome.data_instance),
-                                               outcome.return_edge_index(outcome.data_instance),
-                                               outcome.return_edge_attr(outcome.data_instance))):
+            for x, e_index, e_attr in list(zip(features.return_node_attr(features.data_instance),
+                                               features.return_edge_index(features.data_instance),
+                                               features.return_edge_attr(features.data_instance))):
                 data = Data(x=x, edge_index=e_index, edge_attr=e_attr)
 
                 if self.pre_filter is not None and not self.pre_filter(data):
