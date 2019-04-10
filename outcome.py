@@ -14,36 +14,36 @@ def yielder():
         for subdir, dirs, files in os.walk(r"C:\Users\Flawnson\Documents\Project Seraph & Cherub\Project Outcome\datasets\processed"):
                 for file in files:
                         filepath = subdir + os.sep + file
-                        if filepath.endswith(".pt"):
+                        if filepath.endswith(".pth"):
                                 datasets = torch.load(str(filepath))
-                                print(datasets)
+
                                 yield datasets
+print(list(yielder()))
 
-def get_network_params():
-        datasets = list(yielder())
-        datapoint = datasets[0]
-        num_attr = datapoint.num_features
-        list_num_atoms = []
+# def get_network_params():
+#         datasets = list(yielder())
+#         datapoint = datasets[0]
+#         num_attr = datapoint.num_features
+#         list_num_atoms = []
 
-        for datapoint in datasets:
-                list_num_atoms.append(datapoint.num_nodes)
-        # Other details are defined and included here
-        return num_attr, list_num_atoms
+#         for datapoint in datasets:
+#                 list_num_atoms.append(datapoint.num_nodes)
+#         # Other details are defined and included here
+#         return num_attr, list_num_atoms, datasets
 
-num_attr, list_num_atoms = get_network_params()
+# num_attr, list_num_atoms, datasets = get_network_params()
+# print(datasets)
+# """RANDOM NUMBER/MATRIX GENERATOR"""
+# class CustomRandomState(np.random.RandomState):
+#         def randint(self, k):
+#                 i = np.random.randint(k)
+#                 return i - i % 2
+# np.random.seed(12345)
+# rs = CustomRandomState()
+# rvs = stats.poisson(10, loc=10).rvs
 
-class CustomRandomState(np.random.RandomState):
-        def randint(self, k):
-                i = np.random.randint(k)
-                return i - i % 2
-np.random.seed(12345)
-rs = CustomRandomState()
-rvs = stats.poisson(25, loc=10).rvs
+# def noise_maker(number_of_attributes, list_of_number_of_atoms):
 
-def noise_maker(number_of_attributes, list_of_number_of_atoms):
-
-        for num_atoms in list_of_number_of_atoms:
-                n = random(num_attr, num_atoms, density=1, random_state=rs, data_rvs=rvs)
-        return n.A
-
-print(noise_maker(num_attr, list_num_atoms))
+#         for num_atoms in list_of_number_of_atoms:
+#                 n = random(num_attr, num_atoms, density=1, random_state=rs, data_rvs=rvs)
+#         return n.A
