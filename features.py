@@ -6,6 +6,8 @@ There are a couple possible input types for each function:
 
 import scipy
 import numpy as np
+import pandas as pd
+import itertools
 
 import tqdm
 import torch
@@ -21,9 +23,17 @@ suppl = Chem.SDMolSupplier('10.sdf')
 
 smiles = open("10_rndm_zinc_drugs_clean.smi").read().splitlines()
 
-            # =================================================================================== #
-            #                               GRAPH REPRESENTATION                                  #
-            # =================================================================================== #
+# suppl = Chem.SDMolSupplier("qm9-100-sdf.sdf")
+
+# targets = list(pd.read_csv("qm9-100.csv").mu)
+
+# smiles = open("qm9-100-smiles.smi").read().splitlines()
+
+# assert len(suppl) == len(targets) == len(smiles), "the datasets must be of the same length!"
+
+# =================================================================================== #
+"""                              GRAPH REPRESENTATION                               """
+# =================================================================================== #
 
 def get_adj_matrix_coo(molecules):
     for mol in molecules:
@@ -35,9 +45,9 @@ def get_adj_matrix_coo(molecules):
 
 coo_adj_matrix = list(get_adj_matrix_coo(suppl))
 
-            # =================================================================================== #
-            #                                 GRAPH ATTRIBUTES                                    #
-            # =================================================================================== #
+# =================================================================================== #
+"""                                GRAPH ATTRIBUTES                                 """
+# =================================================================================== #
 
 def get_num_bonds(molecules):
     for mol in suppl:
@@ -47,9 +57,9 @@ def get_num_bonds(molecules):
 
 number_of_bonds = list(get_num_bonds(suppl))
 
-            # =================================================================================== #
-            #                                 NODE ATTRIBUTES                                     #
-            # =================================================================================== #
+# =================================================================================== #
+"""                                NODE ATTRIBUTES                                  """
+# =================================================================================== #
 
 def get_atom_symbols(molecules):
     for mol in molecules:
@@ -71,9 +81,9 @@ all_atom_properties = list(get_atom_properties(get_atom_symbols(suppl)))
 #       access to different properties from the mendeleev package. Also note that this funciton is
 #       dependant on the get_atom_symbols generator directly above it.
 
-            # =================================================================================== #
-            #                                 EDGE ATTRIBUTES                                     #
-            # =================================================================================== #
+# =================================================================================== #
+"""                                EDGE ATTRIBUTES                                  """
+# =================================================================================== #
 
 def get_num_bonds(molecules):
     for mol in suppl:
@@ -90,9 +100,32 @@ def get_bonds_info(molecules):
 
 bond_types = list(get_bonds_info(suppl))
 
-            # =================================================================================== #
-            #                                   BUILD DATASET                                     #
-            # =================================================================================== #
+# =================================================================================== #
+"""                                    TARGETS                                      """
+# =================================================================================== #
+def get_targets(atom_list): # Same as the get_atom_properties function from node attributes section
+    for atoms in atom_list:
+        boiling_points = list([element(atom).boiling_point for atom in atoms])
+        yield boiling_points
+
+targets = list(get_targets(get_atom_symbols(suppl)))
+
+def normalize(numerical_dataset):
+        raw = list(itertools.chain.from_iterable(numerical_dataset))
+
+        maximum = max(raw)
+        minimum = min(raw)
+
+        for targets in numerical_dataset:
+                norm_dataset = [(target - minimum) / (maximum - minimum) for target in targets]
+
+                return norm_dataset
+
+norm_targets = normalize(targets)
+
+# =================================================================================== #
+"""                                 BUILD DATASETS                                  """
+# =================================================================================== #
 
 def seperator(datasets):
     for example in datasets:
@@ -103,35 +136,22 @@ def seperator(datasets):
 edge_index = list(seperator(coo_adj_matrix)) 
 node_attr = list(seperator(all_atom_properties))
 edge_attr = list(seperator(bond_types))
+Y_data = list(seperator(targets))
 
-# print("Edge indices: ", len(list(edge_index)), "(length)")
-# print("Node attributes: ", len(list(node_attr)), "(length)")
-# print("Edge attributes: ", len(list(edge_attr)), "(length)")
+data_instance = list(map(list, zip(node_attr, edge_index, edge_attr, Y_data)))
 
-data_instance = zip(node_attr, edge_index, edge_attr)
-
-data_instance = list(data_instance)
-
-def return_node_attr(zipped_data):
+def return_data(zipped_data):
     for instance in data_instance:
         node_attr = instance[0]
-
-        yield node_attr
-
-def return_edge_index(zipped_data):
-    for instance in data_instance:
         edge_index = instance[1]
-        
-        yield edge_index
-
-def return_edge_attr(zipped_data):
-    for instance in data_instance:
         edge_attr = instance[2]
-        
-        yield edge_attr
+        target = instance[3]
+        print(type(instance))
+        yield node_attr, edge_index, edge_attr, target
 
-node_attr = return_node_attr(data_instance)
-edge_index = return_edge_index(data_instance)
-edge_attr = return_edge_attr(data_instance)
-
-data = Data(x=node_attr, edge_index=edge_index, edge_attr=edge_attr)
+# def data_maker(datapoints):
+#         for node_attr, edge_index, edge_attr, target in datapoints:
+#                 data = Data(x=node_attr, edge_index=edge_index, edge_attr=edge_attr, y=target)
+#                 print(type(data))
+#                 yield data
+# print(list(data_maker(return_data(data_instance))))
