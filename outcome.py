@@ -9,6 +9,12 @@ from torch_geometric.nn import GCNConv
 from scipy.sparse import random
 from scipy import stats
 from numpy.random import normal
+from sklearn import model_selection
+
+# Define variables for the document below
+training_size = .70
+validation_size = .15
+testing_size = .15
 
 def yielder():
         for subdir, dirs, files in os.walk(r"C:\Users\Flawnson\Documents\Project Seraph & Cherub\Project Outcome\datasets\processed"):
@@ -18,32 +24,27 @@ def yielder():
                                 datasets = torch.load(str(filepath))
 
                                 yield datasets
-print(list(yielder()))
 
-# def get_network_params():
-#         datasets = list(yielder())
-#         datapoint = datasets[0]
-#         num_attr = datapoint.num_features
-#         list_num_atoms = []
+def get_network_params():
+        datasets = list(yielder())
+        datapoint = datasets[0]
+        num_attr = datapoint.num_features
+        list_num_atoms = []
 
-#         for datapoint in datasets:
-#                 list_num_atoms.append(datapoint.num_nodes)
-#         # Other details are defined and included here
-#         return num_attr, list_num_atoms, datasets
+        for datapoint in datasets:
+                list_num_atoms.append(datapoint.num_nodes)
 
-# num_attr, list_num_atoms, datasets = get_network_params()
-# print(datasets)
-# """RANDOM NUMBER/MATRIX GENERATOR"""
-# class CustomRandomState(np.random.RandomState):
-#         def randint(self, k):
-#                 i = np.random.randint(k)
-#                 return i - i % 2
-# np.random.seed(12345)
-# rs = CustomRandomState()
-# rvs = stats.poisson(10, loc=10).rvs
+        # Other details are defined and included here
+        return num_attr, list_num_atoms
 
-# def noise_maker(number_of_attributes, list_of_number_of_atoms):
+num_attr, list_num_atoms = get_network_params()
 
-#         for num_atoms in list_of_number_of_atoms:
-#                 n = random(num_attr, num_atoms, density=1, random_state=rs, data_rvs=rvs)
-#         return n.A
+def splitter(datasets):
+        assert training_size >= 0 and training_size <= 1, "Invalid training set fraction"
+
+        train, tmp = model_selection.train_test_split(datasets, train_size=training_size)
+        val, test = model_selection.train_test_split(tmp, train_size=0.5) # This splits the tmp value
+
+        return train, val, test
+
+train, val, test = splitter(list(yielder()))
