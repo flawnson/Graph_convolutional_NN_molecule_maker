@@ -4,6 +4,10 @@ There are a couple possible input types for each function:
 2. atom list (the atoms that each molecule of the sdf is comprised of, which can be represented by any unique ID)
 """
 
+# TODO: get_atom_properties is generalized; adding a .specific_property to element(atom) would allow
+#       access to different properties from the mendeleev package. Also note that this funciton is
+#       dependant on the get_atom_symbols generator directly above it.
+
 import scipy
 import numpy as np
 import pandas as pd
@@ -39,23 +43,35 @@ def get_adj_matrix_coo(molecules):
     for mol in molecules:
         adj_mat = scipy.sparse.csr_matrix(Chem.rdmolops.GetAdjacencyMatrix(mol))
         nx_graph = nx.from_scipy_sparse_matrix(adj_mat)
-        coo_matrix = nx.to_scipy_sparse_matrix(nx_graph, format="coo")
+        coo_matrix = nx.to_scipy_sparse_matrix(nx_graph, dtype=float, format="coo")
 
         yield coo_matrix.row, coo_matrix.col
 
 coo_adj_matrix = list(get_adj_matrix_coo(suppl))
 
+# for buh in coo_adj_matrix:
+#         for duh in buh:
+#                 for cuh in duh:
+#                         cuh = type(np.uint32(cuh).item()) 
+
+# for buh in coo_adj_matrix:
+#         ah = buh[0]
+#         print(type(ah))
+#         for duh in buh:
+#                 eh = duh[0]
+#                 print(type(eh))
+
 # =================================================================================== #
 """                                GRAPH ATTRIBUTES                                 """
 # =================================================================================== #
 
-def get_num_bonds(molecules):
-    for mol in suppl:
-        number_of_bonds = mol.GetNumBonds()
+# def get_num_bonds(molecules):
+#     for mol in suppl:
+#         number_of_bonds = mol.GetNumBonds()
 
-        yield number_of_bonds
+#         yield number_of_bonds
 
-number_of_bonds = list(get_num_bonds(suppl))
+# number_of_bonds = list(get_num_bonds(suppl))
 
 # =================================================================================== #
 """                                NODE ATTRIBUTES                                  """
@@ -77,9 +93,12 @@ def get_atom_properties(atom_list):
 
 all_atom_properties = list(get_atom_properties(get_atom_symbols(suppl)))
 
-# TODO: get_atom_properties is generalized; adding a .specific_property to element(atom) would allow
-#       access to different properties from the mendeleev package. Also note that this funciton is
-#       dependant on the get_atom_symbols generator directly above it.
+# for buh in all_atom_properties:
+#         ah = buh[0]
+#         print(type(ah))
+#         for duh in buh:
+#                 eh = duh[0]
+#                 print(type(eh))
 
 # =================================================================================== #
 """                                EDGE ATTRIBUTES                                  """
@@ -94,21 +113,36 @@ def get_num_bonds(molecules):
 def get_bonds_info(molecules):
     for mol in suppl:
         number_of_bonds = mol.GetNumBonds()
-        bond_types = [bond.GetBondTypeAsDouble() for bond in mol.GetBonds()]
+        bond_types = [int(bond.GetBondTypeAsDouble()) for bond in mol.GetBonds()]
 
         yield bond_types
 
 bond_types = list(get_bonds_info(suppl))
 
+# for luh in bond_types:
+#         ah = luh[0]
+#         print(type(ah))
 # =================================================================================== #
 """                                    TARGETS                                      """
 # =================================================================================== #
-def get_targets(atom_list): # Same as the get_atom_properties function from node attributes section
-    for atoms in atom_list:
-        boiling_points = list([element(atom).boiling_point for atom in atoms])
-        yield boiling_points
+def get_targets(atom_list):
+        # Same as the get_atom_properties function from node attributes section
+        for atoms in atom_list:
+                boiling_points = list([element(atom).boiling_point for atom in atoms])
+
+                yield boiling_points
 
 targets = list(get_targets(get_atom_symbols(suppl)))
+
+def get_num_classes(atom_list):
+        num_classes = []
+        for atoms in atom_list:
+                boiling_points = list([element(atom).boiling_point for atom in atoms])
+                classes = len(sorted(list(set(boiling_points))))
+                num_classes.append(classes)
+        return max(num_classes) # We return the max value, as this is the number of classes of the most diverse molecule
+
+num_classes = get_num_classes(get_atom_symbols(suppl))
 
 def normalize(numerical_dataset):
         raw = list(itertools.chain.from_iterable(numerical_dataset))
@@ -118,10 +152,14 @@ def normalize(numerical_dataset):
 
         for targets in numerical_dataset:
                 norm_dataset = [(target - minimum) / (maximum - minimum) for target in targets]
+                norm_dataset = torch.tensor(norm_dataset, dtype=torch.float)
 
                 return norm_dataset
 
 norm_targets = normalize(targets)
+
+# for buh in norm_targets:
+#         print(type(ah))
 
 # =================================================================================== #
 """                                 BUILD DATASETS                                  """
@@ -146,7 +184,7 @@ def return_data(zipped_data):
         edge_index = instance[1]
         edge_attr = instance[2]
         target = instance[3]
-        print(type(instance))
+
         yield node_attr, edge_index, edge_attr, target
 
 # def data_maker(datapoints):
