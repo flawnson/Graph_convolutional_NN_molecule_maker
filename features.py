@@ -49,29 +49,17 @@ def get_adj_matrix_coo(molecules):
 
 coo_adj_matrix = list(get_adj_matrix_coo(suppl))
 
-# for buh in coo_adj_matrix:
-#         for duh in buh:
-#                 for cuh in duh:
-#                         cuh = type(np.uint32(cuh).item()) 
-
-# for buh in coo_adj_matrix:
-#         ah = buh[0]
-#         print(type(ah))
-#         for duh in buh:
-#                 eh = duh[0]
-#                 print(type(eh))
-
 # =================================================================================== #
 """                                GRAPH ATTRIBUTES                                 """
 # =================================================================================== #
 
-# def get_num_bonds(molecules):
-#     for mol in suppl:
-#         number_of_bonds = mol.GetNumBonds()
+def get_num_bonds(molecules):
+    for mol in suppl:
+        number_of_bonds = mol.GetNumBonds()
 
-#         yield number_of_bonds
+        yield number_of_bonds
 
-# number_of_bonds = list(get_num_bonds(suppl))
+number_of_bonds = list(get_num_bonds(suppl))
 
 # =================================================================================== #
 """                                NODE ATTRIBUTES                                  """
